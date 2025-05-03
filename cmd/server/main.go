@@ -22,14 +22,14 @@ func main() {
 		panic(fmt.Sprintf("Failed to connect to RabbitMQ: %s", err))
 	}
 	defer dial.Close()
-	channel, err := dial.Channel()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to open a channel: %s", err))
-	}
-	defer channel.Close()
-
 	fmt.Println("Connected to RabbitMQ")
 	gamelogic.PrintServerHelp()
+	channel, queue, err := pubsub.DeclareAndBind(dial, routing.ExchangePerilTopic, routing.GameLogSlug, "game_logs.*", pubsub.Durable)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to declare and bind queue: %s", err))
+	}
+	defer channel.Close()
+	fmt.Printf("Queue %s bound to exchange %s with key %s\n", queue.Name, routing.ExchangePerilTopic, "game_logs.*")
 	for {
 		input := gamelogic.GetInput()
 		switch input[0] {
